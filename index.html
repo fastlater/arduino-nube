@@ -1,0 +1,167 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+
+    <title>Centralita</title>
+    <style type="text/css">
+     td{
+    
+    font-weight: bold;
+   
+    }
+
+    p.server-time{
+
+       font-weight: bold;
+    }
+    </style>
+  </head>
+  <body>
+     <div class="container">
+    <h1 >&nbsp;Registro Actual</h1>
+     <p id='server-time'></p>
+           <p></p>
+           <p></p>
+    </div>       
+     <div class="container">      
+    <table  id="Tabla" align="center" class="table table-bordered">
+  <thead align="center">
+    <tr>
+      <th  width="10%"  class="table-info" >MAC</th>
+      <th  id='automata' class="table-active" width="30%" ></th>
+      <th  width="10%" scope="col" class="table-info" >STATUS</th>
+      <th   id='status' class="table-active" ></th>
+    </tr>
+  </thead>
+  <tbody>
+   <tr></tr>
+    <tr></tr>
+    <tr>
+      <td width="30%" align="center">Entrada digital 0  desactivada 1 activada</td>
+      <td width="10%" class="table-info" align="center">ALARMA</td>
+      <td id='alarma' class="table-active" align="center"></td>
+      <td align="center"><img src="https://dl.dropbox.com/s/9ymihx6pa84rcvy/alarmadesa.jpg" id="icono"></td>
+    </tr>
+ <tr></tr>
+    <tr>
+      <td width="30%"align="center">Salida digital 0 desactivada 1 activado</td>
+      <td width="10%" class="table-info" align="center">RELE</td>
+      <td width="10%" id='rele' class="table-active" align="center"></td>
+      <td width="10%" id='dato_rele' align="center"><button type="button" class="btn btn-dark" onclick="activar()">activar</button></td>
+    </tr>
+     <tr></tr>
+    <tr>
+      <td width="30%" align="center">Entrada analogica 0</td>
+      <td width="10%" class="table-info" align="center">TEMPERATURA</td>
+      <td  id=temp class="table-active" align="center"></td>
+      <td align="center"><img src="https://dl.dropbox.com/s/4lidlosdtgm8l82/grado.jpg" id="iconoT"></td>
+    </tr>
+     <tr></tr>
+     <tr>
+      <td width="30%" align="center">Entrada analogica 1</td>
+      <td width="10%" class="table-info" align="center">HUMEDAD</td>
+      <td id=hum class="table-active" align="center"></td>
+      <td align="center"><img src="https://dl.dropbox.com/s/u38dul9hg7kmm87/humedad.jpg" id="iconoH"></td>
+    </tr>
+     <tr></tr>
+  </tbody>
+</table>
+</div>
+ <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      var el = document.getElementById('server-time');
+      var aut= document.getElementById('automata');
+      var sta= document.getElementById('status');
+      var ala= document.getElementById('alarma');
+      var rel= document.getElementById('rele');
+      var tem= document.getElementById('temp');
+      var hum= document.getElementById('hum');
+      var boton_rele= document.getElementById('dato_rele');
+      var img_alarm=document.getElementById('icono');
+       var x;
+       var y;
+       var pulsadoA=0;
+       var pulsadoD=0;
+      socket.on('time', function(timeString) {
+        el.innerHTML = 'Server time: ' + timeString;
+      });
+      socket.on('arduino',function(data){
+        aut.innerHTML=data;
+      });
+       socket.on('alarma',function(data){
+        ala.innerHTML=data;
+         if(data==0){
+            img_alarm.src="https://dl.dropbox.com/s/9ymihx6pa84rcvy/alarmadesa.jpg";
+          }
+
+          if(data==1){
+            img_alarm.src="https://dl.dropbox.com/s/adeh0c20w805u8h/alarmaac.jpg";
+         }
+
+      });
+       socket.on('status',function(data){
+         
+        if(Date.now()-data < 20000){//1 segundo de diferencia
+           sta.innerHTML='ON';
+           console.log(data);
+            console.log(Date.now());
+         }else{
+          sta.innerHTML='OFF';
+          }
+      });
+        socket.on('rele',function(data){
+        rel.innerHTML=data;
+         if(data==0 && pulsadoA==0){
+           x='<button type="button" class="btn btn-dark" onclick="activar()">activar</button>';
+             boton_rele.innerHTML=x;
+         }
+          if(data==1 && pulsadoD==0){
+           y='<button type="button" class="btn btn-dark" onclick="desactivar()">desactivar</button>';
+             boton_rele.innerHTML=y;
+          }
+      });
+
+       socket.on('temp',function(data){
+        tem.innerHTML=data;
+      });
+      socket.on('humedad',function(data){
+        hum.innerHTML=data;
+      });
+
+      function activar() {
+        x='-------'
+        boton_rele.innerHTML=x;
+        pulsadoA=1;
+        pulsadoD=0;
+        socket.emit('activar', 0);
+        
+     };
+      function desactivar() {
+        y='---------'
+        boton_rele.innerHTML=y;
+        pulsadoD=1;
+        pulsadoA=0;
+        socket.emit('activar', 1);
+        
+     };
+
+    </script>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  </body>
+</html>
+
+
+
